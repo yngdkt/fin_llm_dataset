@@ -1,0 +1,24 @@
+segment,subsegment,law_regulation,practice
+Asset Management,Portfolio Management,0,45
+Asset Management,Stewardship/ESG,0,50
+Banking & Payments,ALM,0,45
+Banking & Payments,Deposits & Liability Management,0,35
+Banking & Payments,Lending,0,50
+Banking & Payments,Payments/FX/International,0,45
+Securities & Investment Banking,Cost of Capital,0,50
+Securities & Investment Banking,Derivatives & Risk,0,44
+Securities & Investment Banking,ECM/DCM,0,45
+Securities & Investment Banking,Equity Strategy,0,40
+Securities & Investment Banking,IPO/PO,0,40
+Securities & Investment Banking,IR/SR,0,50
+Securities & Investment Banking,M&A Contract,0,45
+Securities & Investment Banking,M&A Defense,0,45
+Securities & Investment Banking,M&A Due Diligence,0,50
+Securities & Investment Banking,M&A Execution/FA,0,50
+Securities & Investment Banking,PMI,0,45
+Securities & Investment Banking,Regulation/Compliance,50,0
+Securities & Investment Banking,Research/Analysis,0,45
+Securities & Investment Banking,Risk Management,0,45
+Securities & Investment Banking,Secondary Market,0,43
+Securities & Investment Banking,Trading/Operations,0,45
+Securities & Investment Banking,Valuation,0,20

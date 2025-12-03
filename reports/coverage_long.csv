@@ -1,0 +1,46 @@
+segment,subsegment,perspective,language,cnt
+Asset Management,Portfolio Management,practice,en,25
+Asset Management,Portfolio Management,practice,ja,20
+Asset Management,Stewardship/ESG,practice,en,25
+Asset Management,Stewardship/ESG,practice,ja,25
+Banking & Payments,ALM,practice,en,25
+Banking & Payments,ALM,practice,ja,20
+Banking & Payments,Deposits & Liability Management,practice,en,25
+Banking & Payments,Deposits & Liability Management,practice,ja,10
+Banking & Payments,Lending,practice,en,25
+Banking & Payments,Lending,practice,ja,25
+Banking & Payments,Payments/FX/International,practice,en,25
+Banking & Payments,Payments/FX/International,practice,ja,20
+Securities & Investment Banking,Cost of Capital,practice,en,25
+Securities & Investment Banking,Cost of Capital,practice,ja,25
+Securities & Investment Banking,Derivatives & Risk,practice,en,25
+Securities & Investment Banking,Derivatives & Risk,practice,ja,19
+Securities & Investment Banking,ECM/DCM,practice,en,25
+Securities & Investment Banking,ECM/DCM,practice,ja,20
+Securities & Investment Banking,Equity Strategy,practice,en,20
+Securities & Investment Banking,Equity Strategy,practice,ja,20
+Securities & Investment Banking,IPO/PO,practice,en,20
+Securities & Investment Banking,IPO/PO,practice,ja,20
+Securities & Investment Banking,IR/SR,practice,en,25
+Securities & Investment Banking,IR/SR,practice,ja,25
+Securities & Investment Banking,M&A Contract,practice,en,25
+Securities & Investment Banking,M&A Contract,practice,ja,20
+Securities & Investment Banking,M&A Defense,practice,en,25
+Securities & Investment Banking,M&A Defense,practice,ja,20
+Securities & Investment Banking,M&A Due Diligence,practice,en,25
+Securities & Investment Banking,M&A Due Diligence,practice,ja,25
+Securities & Investment Banking,M&A Execution/FA,practice,en,25
+Securities & Investment Banking,M&A Execution/FA,practice,ja,25
+Securities & Investment Banking,PMI,practice,en,25
+Securities & Investment Banking,PMI,practice,ja,20
+Securities & Investment Banking,Regulation/Compliance,law_regulation,en,25
+Securities & Investment Banking,Regulation/Compliance,law_regulation,ja,25
+Securities & Investment Banking,Research/Analysis,practice,en,25
+Securities & Investment Banking,Research/Analysis,practice,ja,20
+Securities & Investment Banking,Risk Management,practice,en,25
+Securities & Investment Banking,Risk Management,practice,ja,20
+Securities & Investment Banking,Secondary Market,practice,en,25
+Securities & Investment Banking,Secondary Market,practice,ja,18
+Securities & Investment Banking,Trading/Operations,practice,en,25
+Securities & Investment Banking,Trading/Operations,practice,ja,20
+Securities & Investment Banking,Valuation,practice,en,20

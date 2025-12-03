@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/fin-llm/book_record.schema.json",
+  "title": "Book Record",
+  "description": "Schema for financial/insurance/economics book metadata entries used in the dataset.",
+  "type": "object",
+  "required": [
+    "record_id",
+    "title",
+    "language",
+    "publication_year",
+    "publisher",
+    "segment",
+    "subsegment",
+    "perspective",
+    "access_type",
+    "dataset_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "record_id": { "type": "string", "description": "Internal unique identifier (stable)." },
+    "title": { "type": "string", "description": "Primary title as published." },
+    "subtitle": { "type": "string" },
+    "authors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of authors or editors in published order."
+    },
+    "language": { "type": "string", "enum": ["ja", "en", "other"], "description": "Primary language of the work." },
+    "publication_year": { "type": "integer", "minimum": 1800, "maximum": 2100 },
+    "edition": { "type": "string", "description": "Edition label (e.g., '3rd', '第2版')." },
+    "publisher": { "type": "string", "description": "Publisher or imprint name (normalized)." },
+    "isbn_or_issn": { "type": "string", "description": "ISBN-10/13 or ISSN if applicable." },
+    "segment": { "type": "string", "description": "Top-level segment (e.g., Securities & Investment Banking)." },
+    "subsegment": { "type": "string", "description": "Subsegment within the segment." },
+    "perspective": {
+      "type": "string",
+      "enum": ["law_regulation", "theory", "practice", "case", "trend", "qualification"],
+      "description": "Perspective: 法制度/規制, 理論, 実務, 事例, トレンド, 資格"
+    },
+    "topics": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Key topics/keywords."
+    },
+    "instrument_or_asset_class": { "type": "string", "description": "Relevant instrument or asset class if any." },
+    "jurisdiction": { "type": "string", "description": "Jurisdiction/region (e.g., JP, US, EU, Global)." },
+    "audience_level": { "type": "string", "enum": ["introductory", "intermediate", "advanced", "mixed"], "description": "Intended reader level." },
+    "format": { "type": "string", "enum": ["print", "ebook", "hybrid", "unknown"] },
+    "pages": { "type": "integer", "minimum": 1 },
+    "series": { "type": "string", "description": "Series name if any." },
+    "official_status": { "type": "string", "enum": ["public", "private"], "description": "Public/governmental vs private/industry." },
+    "access_type": { "type": "string", "enum": ["free", "paid", "mixed", "unknown"] },
+    "source_url": { "type": "string", "format": "uri" },
+    "catalog_url": { "type": "string", "format": "uri" },
+    "notes": { "type": "string" },
+    "related_regulation": { "type": "string", "description": "Related regulation/code references." },
+    "qualification_target": { "type": "string", "description": "Target qualification (e.g., CMA, CFP, USCPA)." },
+    "recommended_for": { "type": "string", "description": "Suggested audience/use cases." },
+    "data_source": { "type": "string", "description": "Reviewer or data source identifier." },
+    "dataset_status": { "type": "string", "enum": ["draft", "validated", "rejected"], "description": "Curation status." },
+    "last_reviewed_at": { "type": "string", "format": "date" }
+  }
+}
