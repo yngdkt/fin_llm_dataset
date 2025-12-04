@@ -2,14 +2,14 @@
 
 本ドキュメントは、金融・保険・経済領域の専門LLM向け学習データセットを構築するためのエージェント作業指針です。実在する専門書籍と公的・民間データソースを体系化し、セグメント×観点のカバレッジで合計10,000冊の書籍DBを構築します。
 
-## スコープと目標
+# スコープと目標
 - 言語: 日本語および英語
 - 対象: 金融・保険・経済関連の実在する専門書、規制当局/公的機関/業界団体/学会の公式資料やデータソース（有償・無償）
 - 目標: 10,000冊の書籍レコードをセグメント別に整備（不足分は優先セグメントから補完）
 - フレーム: セグメント × 観点（法制度/規制・理論・実務・事例・トレンド・資格）でカバレッジを確認
 - 除外: 個人ブログや真偽不明の出典、フィクション、非公開資料、スキャン違法コピー
 
-## 観点の定義
+# 観点の定義
 - 法制度・規制: 法律、監督指針、規制フレームワーク、監督当局・取引所のルール
 - 理論: アカデミック理論、モデル、計量手法
 - 実務: オペレーション、業務プロセス、プロダクト設計、内部管理
@@ -17,57 +17,27 @@
 - トレンド: 最新制度改正、技術動向、マーケット動向、実務動向
 - 資格: 資格試験対策、公式テキスト、ガイドライン
 
-## セグメント分類（初期）
-- 証券・投資銀行 (Securities & Investment Banking)
-  - コーポレートファイナンス（IBD）: 資本政策/Equity Story, バリュエーション(DCF, Comps, SOTP), IPO/PO, 資本コスト/WACC, ECM/DCM, IR/SR, カバレッジ営業
-  - M&A・組織再編: エグゼキューション/FA, 財務・法務・税務・ビジネスDD, PMI, 買収防衛, バリュエーション(Fairness Opinion), 契約(MOU/SPA/SHA), 規制(独禁/外為)
-  - リサーチ・分析: セルサイド/クレジットリサーチ, マクロ/ストラテジー
-  - セカンダリ市場: 株式/債券/ETF/REIT, 市場微細構造, 清算・決済(JSCC/JASDEC, T+2)
-  - トレーディング・運用: セールストレーディング, マーケットメイク, クオンツ/アルゴ/HFT, ポジション管理/Greeks/VaR
-  - 金融規制・コンプライアンス: 金商法開示・不公正取引, 会社法, インサイダー規制, 適合性, ガバナンスコード
-  - デリバティブ・リスク管理: オプション/先物/スワップ/構造化商品, プライシング/ヘッジング, CCP/IM・VM, XVAs, マージン管理, リスク計測(VaR/ES), 規制(EMIR/ドッド・フランク)/清算集中
-- IR/SR: 開示・投資家/株主対応（実務）に加え、`perspective=theory`（情報開示理論・ガバナンス）/`law_regulation`（開示規制・コード）も対象に含める
-- 銀行・決済 (Banking & Payments)
-  - 預金・負債管理: 預金商品, ALM(金利ギャップ/デュレーション), 流動性管理(LCR/NSFR)
-  - 与信・融資: 法人営業RM, 審査・格付・引当, シンジケート/プロジェクト/LBO, アセットファイナンス, 企業再生
-  - 決済・為替・国際業務: 内国為替, 外国為替(SWIFT/コルレス), 貿易金融(L/C, D/P, D/A, SBLC), 市場部門インターバンク
-  - リスク管理・規制: バーゼル規制(CET1/レバレッジ/RWA), 市場・信用・オペリスク, ストレステスト, AML/CFT・KYC/KYB
-- 信託・資産管理 (Trust & Custody)
-  - 信託業務: 金銭/金外信託, 資産流動化, 証券代行
-  - 資産管理（カストディ）: マスタートラスト/グローバルカストディ, ファンド管理, 決済・権利保全
-  - 相続・承継: 遺言・相続信託, 事業承継, 民事信託
-- 資産運用 (Asset Management)
-  - 投資信託・投資顧問: 公募/私募, 投資助言
-  - ポートフォリオマネジメント: アクティブ/パッシブ, アセットアロケーション, リスクパリティ
-  - 金融工学・パフォーマンス評価: CAPM/マルチファクター/ブラック・リッターマン, 評価指標(シャープ/IR/アルファ), リスク計測
-  - スチュワードシップ・ESG: エンゲージメント, ESG投資(スクリーニング/インテグレーション/インパクト)
-- オルタナティブ・不動産 (Alternatives & Real Estate)
-  - プライベート・エクイティ/VC: バイアウト, グロース, 再生, セカンダリー, CVC
-  - 不動産金融: J-REIT/私募REIT, 私募ファンド(GP/LP), 鑑定・評価, ウェアハウジング
-  - ヘッジファンド・その他: ロングショート, グローバルマクロ, イベント, CTA, インフラ投資
-- リース・ノンバンク (Leasing & Non-Bank)
-  - リース: ファイナンス/オペレーティング, JOL/JOLCO, 会計・税務(オン/オフバランス)
-  - クレジット・消費者金融: クレジットカード(イシュイング/アクワイアリング), 貸金業/総量規制, スコアリング/CIC/JICC/AI審査
-- 保険 (Insurance)
-  - 生命保険: 商品(終身/定期/養老/変額/外貨建), 数理(予定率/責任準備金), 販売チャネル
-  - 損害保険: 自動車/火災/地震/新種, 海上保険, ロスプリベンション
-  - リスク・財務・再保険: ERM/ESR/ICS, 再保険(Quota/Excess/CAT), IFRS17
-- 財務・税務・会計 (Finance, Tax & Accounting)
-  - 税務: 法人税務, 国際税務(TP/CFC/PE), 消費税(インボイス), 富裕層税務
-  - 会計・監査: J-GAAP/IFRS/US-GAAP, 収益認識, 監査(KAM/GC), 管理会計(原価/予実/ROIC)
-- サステナブルファイナンス (Sustainable Finance)
-  - 資金調達・商品: グリーン/ソーシャル/SLLボンド, グリーンローン/ポジティブ・インパクト
-  - 開示・基準: TCFD, TNFD, ISSB, GHG算定(Scope1/2/3)
-- フィンテック・経済・その他 (Fintech & Economics)
-  - 暗号資産・Web3: ブロックチェーン, DeFi(DEX/レンディング/ステーキング), 規制(トラベルルール/ステーブルコイン)
-  - フィンテック: 決済(BNPL/QR/給与デジタル払い), 業務効率化(ロボアド/PFM/クラウド会計), API(オープンバンキング/BaaS)
-  - 経済学: ミクロ(ゲーム理論/情報の非対称性), マクロ(IS-LM/Mundell-Fleming/フィリップス曲線), 計量(パネル/因果推論:IV/DID/RDD), 行動経済
-- イスラム金融 (Islamic Finance)
-  - シャリア準拠商品: ムラバハ, イジャラ, ムシャラカ/ムダラバ, スクーク（イスラム債）
-  - 規制・シャリア監査: シャリアボード、AAOIFI基準、IFSBガイドライン、タカフル規制
-  - 資本市場・ストラクチャー: スクーク組成/配分、プロジェクトファイナンスへの適用
-  - リテール/銀行業務: 預金・融資・カードのシャリア準拠スキーム
-  - トレンド・ESG連動: グリーン/サステナブル・スクーク、クロスボーダー案件
+# セグメント分類
+
+本プロジェクトでは以下の9つのセグメントで金融・保険・経済領域をカバーします。
+
+| # | セグメント | 英語名 |
+|---|-----------|--------|
+| 1 | 証券・投資銀行 | Securities & Investment Banking |
+| 2 | 銀行・決済 | Banking & Payments |
+| 3 | 資産運用 | Asset Management |
+| 4 | 保険 | Insurance |
+| 5 | リース・クレジット・ノンバンク | Leasing, Credit & Non-Banking |
+| 6 | 経済学・金融政策 | Economics & Monetary Policy |
+| 7 | 会計・税務・企業法務 | Accounting, Tax & Corporate Law |
+| 8 | フィンテック・暗号資産 | Fintech, Crypto Assets & Web3 |
+| 9 | 不動産・コモディティ | Real Estate, Commodities & Specialized Markets |
+
+各セグメントのサブセグメント・トピック・検索キーワードの詳細は以下のファイルを参照してください：
+
+- **詳細リスト（機械可読）**: [data/config/segment_topics.jsonl](data/config/segment_topics.jsonl)
+- **詳細リスト（人間可読）**: [data/config/segment_topics.md](data/config/segment_topics.md)
+
 
 ## 推奨メタデータ項目（書籍レコード）
 - record_id, title, subtitle, authors, language, publication_year, edition, publisher/imprint, isbn_or_issn
@@ -107,3 +77,126 @@
 - 規制/法制度と実務ガイドは最新改訂版を優先し、理論書は古典と最新版をバランス配置。
 - トレンド/フィンテック領域は刊行年が新しいものを優先し、毎年のアップデート枠を確保。
 - 基本方針として刊行年2015〜2025の実務・制度・トレンド系を中心に収集（古い版は補足的に扱う）。
+
+---
+
+## 収集アプローチ（2段階統合方式）
+
+本プロジェクトでは以下の2つのアプローチを並行して実行し、最終的に統合します。
+
+### アプローチA: 出版社カタログからのクローリング
+金融・保険・経済に強い出版社のWebサイトから目録をベースに書籍一覧を自動収集します。
+
+対象出版社の詳細は以下のファイルを参照してください：
+
+- **出版社リスト**: [data/config/publishers.jsonl](data/config/publishers.jsonl)
+
+### アプローチB: セグメント×観点からの検索収集
+セグメント分類と観点に基づき、キーワード検索でターゲットを絞った収集を行います。
+検索キーワードは [data/config/segment_topics.jsonl](data/config/segment_topics.jsonl) を参照。
+
+### 統合・重複排除プロセス
+1. **版の統一**: 同一書籍の版違い（Edition違い）は最新版のみを採用
+   - ISBN-13の先頭12桁（チェックディジット除く）で同一書籍を判定
+   - タイトル＋著者の正規化マッチングで補完
+   - publication_yearが最新のものを採用
+2. **URL検証**: 収集した`source_url`/`catalog_url`の有効性をバリデーション
+3. **重要度スコアリング**: 以下の要素でランク付け
+   - 出版社の信頼度スコア（tier1/tier2/tier3）
+   - 刊行年の新しさ（2020年以降を優先）
+   - 被引用数・レビュー数（取得可能な場合）
+   - セグメント×観点のカバレッジ貢献度
+4. **マスターDBへの統合**: `data/master_books.jsonl`として一元管理
+
+---
+
+## 技術スタック・実行環境
+
+### 環境設定
+```bash
+# 仮想環境の有効化
+source .venv/bin/activate
+
+# 依存パッケージのインストール
+pip install -r requirements.txt
+```
+
+### 使用ライブラリ
+- **クローリング**: `requests`, `beautifulsoup4`, `playwright` (JS必須サイト用)
+- **データ処理**: `pandas`, `polars`
+- **バリデーション**: `jsonschema`, `pydantic`
+- **LLM API連携**: `openai`, `anthropic`, `google-generativeai`
+- **非同期処理**: `asyncio`, `aiohttp`
+- **レート制限**: `ratelimit`, `tenacity`
+
+### LLM APIの活用
+- **セグメント/観点の自動分類**: 書籍タイトル・説明文からセグメント・サブセグメント・観点を推定
+- **重複判定の補助**: タイトルの類似度判定、同一書籍の版違い検出
+- **メタデータ補完**: 不足フィールドの推定・補完
+- **品質チェック**: 収集データの妥当性検証
+
+### ディレクトリ構造
+```
+fin_llm_dataset/
+├── .venv/                  # Python仮想環境
+├── AGENTS.md               # 本ドキュメント
+├── README.md
+├── requirements.txt        # 依存パッケージ
+├── schema/
+│   └── book_record.schema.json
+├── scripts/
+│   ├── validate.py         # JSONLバリデーション
+│   ├── crawlers/           # 出版社別クローラー
+│   │   ├── base_crawler.py
+│   │   ├── wiley_crawler.py
+│   │   ├── nikkei_crawler.py
+│   │   └── ...
+│   ├── processors/         # データ処理
+│   │   ├── build_master.py # マスターDB構築
+│   │   ├── build_db.py     # SQLiteビルド
+│   │   ├── book_matcher.py # 重複判定
+│   │   └── migrate_v1_to_v2.py
+│   └── classifiers/        # LLM分類
+│       └── segment_classifier.py
+├── data/
+│   ├── config/             # 設定ファイル
+│   │   ├── segment_topics.jsonl  # セグメント・トピック定義
+│   │   ├── segment_topics.md     # 同上（人間可読版）
+│   │   └── publishers.jsonl      # 出版社リスト
+│   ├── raw/                # クローラー生データ（.gitignore）
+│   ├── processed/          # 処理済みデータ
+│   └── master/             # マスターDB
+│       └── books.jsonl     # 統合マスター
+├── samples/
+│   └── books.sample.jsonl
+└── reports/
+    └── coverage_matrix.csv # セグメント×観点カバレッジ
+```
+
+---
+
+## クローラー実行ガイド
+
+### 基本コマンド
+```bash
+# 単一出版社のクロール
+python scripts/crawlers/wiley_crawler.py --category finance --output data/raw/wiley/
+
+# マスターDBの初期構築
+python scripts/processors/build_master.py --init
+
+# ソースの追加
+python scripts/processors/build_master.py --add data/raw/publisher/books.jsonl
+
+# 統計情報の確認
+python scripts/processors/build_master.py --stats
+
+# SQLiteデータベースのビルド
+python scripts/processors/build_db.py
+```
+
+### レート制限・倫理的配慮
+- 各サイトへのリクエスト間隔: 最低2秒
+- robots.txtの尊重
+- User-Agentの明示
+- 過度な負荷をかけない（1日あたりの上限設定）

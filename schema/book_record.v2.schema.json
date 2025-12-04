@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/fin-llm/book_record.v2.schema.json",
+  "title": "Book Record v2",
+  "description": "Schema for financial/insurance/economics book metadata with multi-edition and multi-format support.",
+  "type": "object",
+  "required": [
+    "work_id",
+    "title",
+    "language",
+    "publisher",
+    "segment",
+    "subsegment",
+    "perspective",
+    "editions",
+    "dataset_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "work_id": {
+      "type": "string",
+      "description": "Unique identifier for the work (shared across editions and formats). Format: {publisher}_{normalized_title_hash}",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Primary title as published."
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Subtitle if any."
+    },
+    "authors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of authors in published order."
+    },
+    "editors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of editors if applicable."
+    },
+    "language": {
+      "type": "string",
+      "enum": ["ja", "en", "other"],
+      "description": "Primary language of the work."
+    },
+    "publisher": {
+      "type": "string",
+      "description": "Publisher or imprint name (normalized)."
+    },
+    "series": {
+      "type": "string",
+      "description": "Series name if any (e.g., 'Wiley Finance')."
+    },
+    "segment": {
+      "type": "string",
+      "description": "Top-level segment (e.g., 'Securities & Investment Banking')."
+    },
+    "subsegment": {
+      "type": "string",
+      "description": "Subsegment within the segment."
+    },
+    "perspective": {
+      "type": "string",
+      "enum": ["law_regulation", "theory", "practice", "case", "trend", "qualification"],
+      "description": "Perspective: 法制度/規制, 理論, 実務, 事例, トレンド, 資格"
+    },
+    "topics": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Key topics/keywords."
+    },
+    "instrument_or_asset_class": {
+      "type": "string",
+      "description": "Relevant instrument or asset class if any."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "Jurisdiction/region (e.g., JP, US, EU, Global)."
+    },
+    "audience_level": {
+      "type": "string",
+      "enum": ["introductory", "intermediate", "advanced", "mixed"],
+      "description": "Intended reader level."
+    },
+    "official_status": {
+      "type": "string",
+      "enum": ["public", "private"],
+      "description": "Public/governmental vs private/industry."
+    },
+    "related_regulation": {
+      "type": "string",
+      "description": "Related regulation/code references."
+    },
+    "qualification_target": {
+      "type": "string",
+      "description": "Target qualification (e.g., CMA, CFP, CFA, FRM)."
+    },
+    "editions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Array of editions, ordered by edition_number descending (latest first).",
+      "items": {
+        "type": "object",
+        "required": ["edition_number", "publication_year", "is_latest", "formats"],
+        "additionalProperties": false,
+        "properties": {
+          "edition_number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Edition number (1 for first edition)."
+          },
+          "edition_label": {
+            "type": "string",
+            "description": "Edition label as printed (e.g., '3rd Edition', '第2版', 'Revised Edition')."
+          },
+          "publication_year": {
+            "type": "integer",
+            "minimum": 1800,
+            "maximum": 2100,
+            "description": "Year of publication for this edition."
+          },
+          "is_latest": {
+            "type": "boolean",
+            "description": "True if this is the latest/current edition."
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of pages."
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description or summary of this edition."
+          },
+          "table_of_contents": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Chapter titles if available."
+          },
+          "formats": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Available formats for this edition.",
+            "items": {
+              "type": "object",
+              "required": ["format_type"],
+              "additionalProperties": false,
+              "properties": {
+                "format_type": {
+                  "type": "string",
+                  "enum": [
+                    "hardcover",
+                    "paperback",
+                    "ebook",
+                    "pdf",
+                    "kindle",
+                    "audiobook",
+                    "online_access",
+                    "bundle",
+                    "print_replica",
+                    "other"
+                  ],
+                  "description": "Format type."
+                },
+                "isbn": {
+                  "type": "string",
+                  "pattern": "^(97[89])?[0-9]{9}[0-9X]$",
+                  "description": "ISBN-10 or ISBN-13 (digits only, X allowed for ISBN-10 check digit)."
+                },
+                "asin": {
+                  "type": "string",
+                  "pattern": "^[A-Z0-9]{10}$",
+                  "description": "Amazon Standard Identification Number."
+                },
+                "price": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Price amount."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "enum": ["USD", "JPY", "EUR", "GBP", "CHF", "CAD", "AUD"],
+                      "description": "Currency code."
+                    },
+                    "price_type": {
+                      "type": "string",
+                      "enum": ["list", "sale", "rental"],
+                      "description": "Type of price."
+                    }
+                  },
+                  "required": ["amount", "currency"]
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Direct URL to purchase/access this format."
+                },
+                "url_status": {
+                  "type": "string",
+                  "enum": ["valid", "invalid", "redirect", "unchecked"],
+                  "description": "URL validation status."
+                },
+                "url_verified_at": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Date when URL was last verified."
+                },
+                "availability": {
+                  "type": "string",
+                  "enum": ["available", "out_of_stock", "preorder", "discontinued", "unknown"],
+                  "description": "Current availability status."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or comments."
+    },
+    "recommended_for": {
+      "type": "string",
+      "description": "Suggested audience/use cases."
+    },
+    "data_sources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of data sources that contributed to this record."
+    },
+    "importance_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Calculated importance score (0-100) based on publisher tier, recency, coverage contribution."
+    },
+    "dataset_status": {
+      "type": "string",
+      "enum": ["draft", "validated", "rejected"],
+      "description": "Curation status."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Record creation timestamp."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp."
+    },
+    "last_reviewed_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last manual review."
+    }
+  }
+}

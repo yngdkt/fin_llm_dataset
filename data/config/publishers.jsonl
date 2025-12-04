@@ -1,0 +1,28 @@
+{"publisher": "Wiley", "region": "international", "language": "en", "priority": "high", "categories": ["Finance & Investments", "Risk Management", "Banking"], "website": "https://www.wiley.com"}
+{"publisher": "Pearson", "region": "international", "language": "en", "priority": "high", "categories": ["Finance", "Economics"], "website": "https://www.pearson.com"}
+{"publisher": "McGraw-Hill", "region": "international", "language": "en", "priority": "high", "categories": ["Finance", "Investments"], "website": "https://www.mheducation.com"}
+{"publisher": "Oxford University Press", "region": "international", "language": "en", "priority": "high", "categories": ["Finance", "Economics"], "website": "https://global.oup.com"}
+{"publisher": "Cambridge University Press", "region": "international", "language": "en", "priority": "medium", "categories": ["Finance", "Economics"], "website": "https://www.cambridge.org"}
+{"publisher": "Springer", "region": "international", "language": "en", "priority": "medium", "categories": ["Finance", "Quantitative Finance"], "website": "https://www.springer.com"}
+{"publisher": "Elsevier", "region": "international", "language": "en", "priority": "medium", "categories": ["Finance", "Economics"], "website": "https://www.elsevier.com"}
+{"publisher": "FT Press", "region": "international", "language": "en", "priority": "medium", "categories": ["Professional Finance"], "website": "https://www.ftpress.com"}
+{"publisher": "日本経済新聞出版", "region": "japan", "language": "ja", "priority": "high", "categories": ["金融・マネー", "経営・経済"], "website": "https://bookplus.nikkei.com"}
+{"publisher": "東洋経済新報社", "region": "japan", "language": "ja", "priority": "high", "categories": ["金融・マーケット"], "website": "https://str.toyokeizai.net"}
+{"publisher": "中央経済社", "region": "japan", "language": "ja", "priority": "high", "categories": ["会計・税務・金融"], "website": "https://www.chuokeizai.co.jp"}
+{"publisher": "金融財政事情研究会", "region": "japan", "language": "ja", "priority": "high", "categories": ["金融実務全般"], "website": "https://www.kinzai.jp", "alias": ["きんざい"]}
+{"publisher": "有斐閣", "region": "japan", "language": "ja", "priority": "medium", "categories": ["法律・経済"], "website": "https://www.yuhikaku.co.jp"}
+{"publisher": "ダイヤモンド社", "region": "japan", "language": "ja", "priority": "medium", "categories": ["ビジネス・金融"], "website": "https://www.diamond.co.jp"}
+{"publisher": "日経BP", "region": "japan", "language": "ja", "priority": "medium", "categories": ["ビジネス・金融"], "website": "https://shop.nikkeibp.co.jp"}
+{"publisher": "秀和システム", "region": "japan", "language": "ja", "priority": "medium", "categories": ["IT・金融"], "website": "https://www.shuwasystem.co.jp"}
+{"publisher": "KADOKAWA", "region": "japan", "language": "ja", "priority": "medium", "categories": ["ビジネス・金融"], "website": "https://www.kadokawa.co.jp"}
+{"publisher": "日本能率協会マネジメントセンター", "region": "japan", "language": "ja", "priority": "medium", "categories": ["ビジネス・資格"], "website": "https://www.jmam.co.jp", "alias": ["JMAM"]}
+{"publisher": "三修社", "region": "japan", "language": "ja", "priority": "medium", "categories": ["ビジネス・金融"], "website": "https://www.sanshusha.co.jp"}
+{"publisher": "日本実業出版社", "region": "japan", "language": "ja", "priority": "medium", "categories": ["ビジネス・金融"], "website": "https://www.njg.co.jp"}
+{"publisher": "中央法規出版", "region": "japan", "language": "ja", "priority": "medium", "categories": ["法律・福祉"], "website": "https://www.chuohoki.co.jp"}
+{"publisher": "商事法務", "region": "japan", "language": "ja", "priority": "medium", "categories": ["法律・会社法"], "website": "https://www.shojihomu.co.jp"}
+{"publisher": "税務経理協会", "region": "japan", "language": "ja", "priority": "medium", "categories": ["会計・税務"], "website": "https://www.zeikei.co.jp"}
+{"publisher": "同文舘出版", "region": "japan", "language": "ja", "priority": "medium", "categories": ["経営・会計"], "website": "https://www.dobunkan.co.jp"}
+{"publisher": "CFA Institute", "region": "international", "language": "en", "priority": "high", "categories": ["Investment", "Finance", "Qualification"], "website": "https://www.cfainstitute.org"}
+{"publisher": "GARP", "region": "international", "language": "en", "priority": "high", "categories": ["Risk Management", "Qualification"], "website": "https://www.garp.org", "alias": ["Global Association of Risk Professionals"]}
+{"publisher": "日本証券アナリスト協会", "region": "japan", "language": "ja", "priority": "high", "categories": ["証券分析", "資格"], "website": "https://www.saa.or.jp"}
+{"publisher": "日本アクチュアリー会", "region": "japan", "language": "ja", "priority": "high", "categories": ["保険数理", "資格"], "website": "https://www.actuaries.jp"}
