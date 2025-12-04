@@ -43,6 +43,11 @@ data/raw/
 data/*.db
 *.db
 
+# API keys / secrets
+secrets.json
+.env
+.env.local
+
 # Logs
 *.log
 logs/

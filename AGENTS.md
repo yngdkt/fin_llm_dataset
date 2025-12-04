@@ -152,9 +152,10 @@ fin_llm_dataset/
 │   │   ├── nikkei_crawler.py
 │   │   └── ...
 │   ├── processors/         # データ処理
-│   │   ├── build_master.py # マスターDB構築
-│   │   ├── build_db.py     # SQLiteビルド
-│   │   ├── book_matcher.py # 重複判定
+│   │   ├── build_master.py   # マスターDB構築
+│   │   ├── build_db.py       # SQLiteビルド
+│   │   ├── book_matcher.py   # 重複判定
+│   │   ├── enrich_master.py  # 不足情報補完
 │   │   └── migrate_v1_to_v2.py
 │   └── classifiers/        # LLM分類
 │       └── segment_classifier.py
@@ -193,6 +194,15 @@ python scripts/processors/build_master.py --stats
 
 # SQLiteデータベースのビルド
 python scripts/processors/build_db.py
+
+# マスターDBの完全性チェック
+python scripts/processors/enrich_master.py --check
+
+# 不足情報の補完（ISBN, 価格, Amazon URL等）
+python scripts/processors/enrich_master.py --enrich --max-records 100
+
+# 不完全レコードのエクスポート（手動確認用）
+python scripts/processors/enrich_master.py --export-incomplete incomplete.jsonl
 ```
 
 ### レート制限・倫理的配慮
