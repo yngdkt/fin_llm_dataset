@@ -88,13 +88,53 @@ class ClassificationResult:
         }
 
 
+@dataclass
+class LLMResponse:
+    """Response from LLM call with usage statistics."""
+    text: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+    model: str = ""
+
+
 class BaseLLMClient(ABC):
     """Abstract base class for LLM clients."""
+
+    # Track cumulative token usage
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    call_count: int = 0
 
     @abstractmethod
     def call(self, prompt: str) -> str:
         """Call LLM with prompt and return response text."""
         pass
+
+    def call_with_usage(self, prompt: str) -> LLMResponse:
+        """Call LLM and return response with usage statistics.
+
+        Default implementation just calls call() without usage tracking.
+        Subclasses should override for proper usage tracking.
+        """
+        text = self.call(prompt)
+        self.call_count += 1
+        return LLMResponse(text=text)
+
+    def get_usage_stats(self) -> Dict[str, Any]:
+        """Get cumulative usage statistics."""
+        return {
+            'call_count': self.call_count,
+            'total_input_tokens': self.total_input_tokens,
+            'total_output_tokens': self.total_output_tokens,
+            'total_tokens': self.total_input_tokens + self.total_output_tokens
+        }
+
+    def reset_usage_stats(self) -> None:
+        """Reset usage statistics."""
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
+        self.call_count = 0
 
     @property
     @abstractmethod
@@ -109,6 +149,9 @@ class ClaudeClient(BaseLLMClient):
     def __init__(self, model: str = "claude-sonnet-4-20250514"):
         self.model = model
         self._client = None
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
+        self.call_count = 0
 
         try:
             import anthropic
@@ -129,6 +172,33 @@ class ClaudeClient(BaseLLMClient):
         )
         return response.content[0].text
 
+    def call_with_usage(self, prompt: str) -> LLMResponse:
+        if not self._client:
+            raise RuntimeError("Claude client not initialized (missing API key or package)")
+
+        response = self._client.messages.create(
+            model=self.model,
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Extract usage from response
+        input_tokens = response.usage.input_tokens if response.usage else 0
+        output_tokens = response.usage.output_tokens if response.usage else 0
+
+        # Update cumulative stats
+        self.total_input_tokens += input_tokens
+        self.total_output_tokens += output_tokens
+        self.call_count += 1
+
+        return LLMResponse(
+            text=response.content[0].text,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=input_tokens + output_tokens,
+            model=self.model
+        )
+
     @property
     def provider_name(self) -> str:
         return "claude"
@@ -140,6 +210,9 @@ class OpenAIClient(BaseLLMClient):
     def __init__(self, model: str = "gpt-4o"):
         self.model = model
         self._client = None
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
+        self.call_count = 0
 
         try:
             import openai
@@ -159,6 +232,33 @@ class OpenAIClient(BaseLLMClient):
             messages=[{"role": "user", "content": prompt}]
         )
         return response.choices[0].message.content
+
+    def call_with_usage(self, prompt: str) -> LLMResponse:
+        if not self._client:
+            raise RuntimeError("OpenAI client not initialized (missing API key or package)")
+
+        response = self._client.chat.completions.create(
+            model=self.model,
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Extract usage from response
+        input_tokens = response.usage.prompt_tokens if response.usage else 0
+        output_tokens = response.usage.completion_tokens if response.usage else 0
+
+        # Update cumulative stats
+        self.total_input_tokens += input_tokens
+        self.total_output_tokens += output_tokens
+        self.call_count += 1
+
+        return LLMResponse(
+            text=response.choices[0].message.content,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=input_tokens + output_tokens,
+            model=self.model
+        )
 
     @property
     def provider_name(self) -> str:
@@ -517,7 +617,7 @@ def main():
     parser.add_argument('--description', help='Book description')
     parser.add_argument('--authors', nargs='+', help='Book authors')
     parser.add_argument('--provider', choices=['claude', 'openai', 'gemini'],
-                       default='claude', help='LLM provider')
+                       default='openai', help='LLM provider')
     parser.add_argument('--model', help='Model name (provider-specific)')
     parser.add_argument('--segments', type=Path, default=DEFAULT_SEGMENTS_FILE,
                        help='Path to segments.jsonl')

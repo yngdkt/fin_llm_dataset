@@ -38,6 +38,9 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any, Set, Tuple
 from enum import Enum
 
+# Ensure project root is in path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 try:
     import requests
     from bs4 import BeautifulSoup
@@ -52,6 +55,18 @@ try:
 except ImportError:
     MATCHER_AVAILABLE = False
 
+# Import unified content filter
+try:
+    from scripts.filters import (
+        is_beginner_book,
+        is_irrelevant_content,
+        should_exclude_book,
+        filter_relevant_books,
+    )
+    FILTER_AVAILABLE = True
+except ImportError:
+    FILTER_AVAILABLE = False
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
@@ -65,59 +80,12 @@ TOPICS_FILE = BASE_DIR / "data" / "config" / "segment_topics.jsonl"
 STATE_FILE = BASE_DIR / "data" / "master" / ".amazon_search_state.json"
 SEARCH_LOG_FILE = BASE_DIR / "data" / "master" / "amazon_search_log.jsonl"
 
-# Patterns to identify beginner/introductory books (to exclude)
-BEGINNER_PATTERNS_JA = [
-    r'入門',
-    r'はじめて',
-    r'初めて',
-    r'ゼロから',
-    r'基礎から',
-    r'わかる',
-    r'やさしい',
-    r'かんたん',
-    r'簡単',
-    r'初心者',
-    r'ビギナー',
-    r'超入門',
-    r'よくわかる',
-    r'すぐわかる',
-    r'図解',
-    r'マンガ',
-    r'まんが',
-    r'漫画',
-    r'イラスト',
-    r'1時間で',
-    r'1日で',
-    r'一日で',
-    r'週末で',
-    r'すぐできる',
-    r'これだけ',
-    r'いちばんやさしい',
-    r'世界一やさしい',
-]
 
-BEGINNER_PATTERNS_EN = [
-    r'(?i)for\s+dummies',
-    r'(?i)for\s+beginners',
-    r'(?i)beginner',
-    r'(?i)introduction\s+to',
-    r'(?i)intro\s+to',
-    r'(?i)getting\s+started',
-    r'(?i)step\s+by\s+step',
-    r'(?i)made\s+simple',
-    r'(?i)made\s+easy',
-    r'(?i)simplified',
-    r'(?i)basics',
-    r'(?i)fundamentals',
-    r'(?i)primer',
-    r'(?i)crash\s+course',
-    r'(?i)quick\s+start',
-    r'(?i)in\s+24\s+hours',
-    r'(?i)in\s+a\s+week',
-    r'(?i)illustrated',
-    r'(?i)visual\s+guide',
-    r'(?i)complete\s+idiot',
-]
+class AmazonSearchError(Exception):
+    """Custom exception for Amazon search errors."""
+    def __init__(self, message: str, is_retryable: bool = False):
+        super().__init__(message)
+        self.is_retryable = is_retryable
 
 
 class KeywordStatus(Enum):
@@ -204,7 +172,13 @@ class BookResult:
             "topics": [keyword],
             "created_at": datetime.now().isoformat() + "Z",
             "updated_at": datetime.now().isoformat() + "Z",
-            "data_sources": ["amazon_search"]
+            "data_sources": [
+                {
+                    "source": "amazon_search",
+                    "keyword": keyword,
+                    "searched_at": datetime.now().isoformat() + "Z"
+                }
+            ]
         }
 
         # Add optional fields
@@ -230,25 +204,63 @@ class BookResult:
 class AmazonSearcher:
     """Search Amazon for books."""
 
-    def __init__(self, delay: float = 3.0):
+    # User agent rotation list
+    USER_AGENTS = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    ]
+
+    def __init__(self, delay: float = 8.0, fresh_session: bool = False):
         self.delay = delay
         self.last_request = 0.0
-        self.session = requests.Session() if REQUESTS_AVAILABLE else None
+        self.consecutive_errors = 0
+        self.fresh_session = fresh_session
+        self.request_count = 0
+        self._create_session()
 
-        if self.session:
-            self.session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            })
+    def _create_session(self):
+        """Create a new session with random user agent."""
+        if not REQUESTS_AVAILABLE:
+            self.session = None
+            return
 
-    def _wait(self):
-        """Rate limiting with jitter."""
+        self.session = requests.Session()
+        user_agent = random.choice(self.USER_AGENTS)
+        self.session.headers.update({
+            'User-Agent': user_agent,
+            'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        })
+        logger.debug(f"Created new session with UA: {user_agent[:50]}...")
+
+    def _maybe_refresh_session(self):
+        """Refresh session if fresh_session mode is enabled or after errors."""
+        if self.fresh_session or self.consecutive_errors > 0:
+            logger.info("  Refreshing session...")
+            self._create_session()
+            self.consecutive_errors = 0
+
+    def _wait(self, extra_delay: float = 0.0):
+        """Rate limiting with jitter and backoff for errors."""
         elapsed = time.time() - self.last_request
-        wait_time = self.delay + random.uniform(0.5, 2.0)  # Add jitter
+        # Base delay + jitter (8-12 seconds) + extra delay for backoff
+        wait_time = self.delay + random.uniform(2.0, 4.0) + extra_delay
         if elapsed < wait_time:
             time.sleep(wait_time - elapsed)
         self.last_request = time.time()
+
+    def _backoff_wait(self):
+        """Additional wait after error with exponential backoff."""
+        backoff = min(30.0, 5.0 * (2 ** self.consecutive_errors))
+        logger.info(f"  Backing off for {backoff:.0f} seconds...")
+        time.sleep(backoff)
 
     def search_amazon_jp(
         self,
@@ -256,11 +268,18 @@ class AmazonSearcher:
         max_results: int = 20
     ) -> List[BookResult]:
         """Search Amazon.co.jp for Japanese keyword."""
-        if not self.session:
+        if not REQUESTS_AVAILABLE:
             logger.warning("requests not available")
             return []
 
+        # Refresh session if needed (fresh_session mode or after errors)
+        self._maybe_refresh_session()
         self._wait()
+
+        # Update headers for JP site
+        self.session.headers.update({
+            'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
+        })
 
         # Search URL for books category
         url = "https://www.amazon.co.jp/s"
@@ -277,9 +296,16 @@ class AmazonSearcher:
 
             return self._parse_amazon_jp_results(response.text, max_results)
 
+        except requests.exceptions.HTTPError as e:
+            # Re-raise HTTP errors (503, 429, etc.) for proper handling
+            logger.warning(f"Amazon.co.jp HTTP error for '{keyword}': {e}")
+            raise AmazonSearchError(f"HTTP error: {e}", is_retryable=True)
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Amazon.co.jp request failed for '{keyword}': {e}")
+            raise AmazonSearchError(f"Request error: {e}", is_retryable=True)
         except Exception as e:
             logger.warning(f"Amazon.co.jp search failed for '{keyword}': {e}")
-            return []
+            raise AmazonSearchError(f"Search error: {e}", is_retryable=False)
 
     def search_amazon_com(
         self,
@@ -287,10 +313,12 @@ class AmazonSearcher:
         max_results: int = 20
     ) -> List[BookResult]:
         """Search Amazon.com for English keyword."""
-        if not self.session:
+        if not REQUESTS_AVAILABLE:
             logger.warning("requests not available")
             return []
 
+        # Refresh session if needed (fresh_session mode or after errors)
+        self._maybe_refresh_session()
         self._wait()
 
         # Update headers for US site
@@ -312,9 +340,16 @@ class AmazonSearcher:
 
             return self._parse_amazon_com_results(response.text, max_results)
 
+        except requests.exceptions.HTTPError as e:
+            # Re-raise HTTP errors (503, 429, etc.) for proper handling
+            logger.warning(f"Amazon.com HTTP error for '{keyword}': {e}")
+            raise AmazonSearchError(f"HTTP error: {e}", is_retryable=True)
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Amazon.com request failed for '{keyword}': {e}")
+            raise AmazonSearchError(f"Request error: {e}", is_retryable=True)
         except Exception as e:
             logger.warning(f"Amazon.com search failed for '{keyword}': {e}")
-            return []
+            raise AmazonSearchError(f"Search error: {e}", is_retryable=False)
 
     def _parse_amazon_jp_results(
         self,
@@ -372,15 +407,25 @@ class AmazonSearcher:
         if not asin:
             return None
 
-        # Get title
-        title_elem = item.select_one('h2 a span')
+        # Get title (try multiple selectors for robustness)
+        title_elem = (
+            item.select_one('h2 span') or
+            item.select_one('h2 a span') or
+            item.select_one('.a-size-medium.a-text-normal') or
+            item.select_one('h2')
+        )
         if not title_elem:
             return None
         title = title_elem.get_text(strip=True)
+        if not title:
+            return None
+
+        # Skip sponsored items by checking title prefix
+        if title.startswith('スポンサー'):
+            return None
 
         # Get URL
-        link_elem = item.select_one('h2 a')
-        url = f"https://www.amazon.co.jp/dp/{asin}" if link_elem else ""
+        url = f"https://www.amazon.co.jp/dp/{asin}"
 
         # Get authors
         author_elem = item.select_one('.a-row.a-size-base.a-color-secondary')
@@ -401,6 +446,19 @@ class AmazonSearcher:
             if price_match:
                 price = float(price_match.group().replace(',', ''))
 
+        # Get description (snippet shown in search results)
+        description = None
+        desc_elem = (
+            item.select_one('.a-size-base-plus.a-color-base.a-text-normal') or
+            item.select_one('.a-row.a-size-base.a-color-base') or
+            item.select_one('[data-cy="title-recipe"] + div')
+        )
+        if desc_elem:
+            desc_text = desc_elem.get_text(strip=True)
+            # Filter out non-description text
+            if desc_text and len(desc_text) > 20 and not desc_text.startswith('¥'):
+                description = desc_text[:500]  # Limit length
+
         return BookResult(
             title=title,
             authors=authors,
@@ -408,7 +466,8 @@ class AmazonSearcher:
             url=url,
             price=price,
             currency="JPY",
-            language="ja"
+            language="ja",
+            description=description
         )
 
     def _extract_book_com(self, item) -> Optional[BookResult]:
@@ -417,10 +476,22 @@ class AmazonSearcher:
         if not asin:
             return None
 
-        title_elem = item.select_one('h2 a span')
+        # Get title (try multiple selectors for robustness)
+        title_elem = (
+            item.select_one('h2 span') or
+            item.select_one('h2 a span') or
+            item.select_one('.a-size-medium.a-text-normal') or
+            item.select_one('h2')
+        )
         if not title_elem:
             return None
         title = title_elem.get_text(strip=True)
+        if not title:
+            return None
+
+        # Skip sponsored items
+        if title.lower().startswith('sponsor'):
+            return None
 
         url = f"https://www.amazon.com/dp/{asin}"
 
@@ -440,6 +511,19 @@ class AmazonSearcher:
             if price_match:
                 price = float(price_match.group())
 
+        # Get description (snippet shown in search results)
+        description = None
+        desc_elem = (
+            item.select_one('.a-size-base-plus.a-color-base.a-text-normal') or
+            item.select_one('.a-row.a-size-base.a-color-base') or
+            item.select_one('[data-cy="title-recipe"] + div')
+        )
+        if desc_elem:
+            desc_text = desc_elem.get_text(strip=True)
+            # Filter out non-description text
+            if desc_text and len(desc_text) > 20 and not desc_text.startswith('$'):
+                description = desc_text[:500]  # Limit length
+
         return BookResult(
             title=title,
             authors=authors,
@@ -447,35 +531,37 @@ class AmazonSearcher:
             url=url,
             price=price,
             currency="USD",
-            language="en"
+            language="en",
+            description=description
         )
 
 
-def is_beginner_book(title: str, language: str = "ja") -> bool:
-    """Check if a book is for beginners/introductory."""
-    patterns = BEGINNER_PATTERNS_JA if language == "ja" else BEGINNER_PATTERNS_EN
-
-    for pattern in patterns:
-        if re.search(pattern, title):
-            return True
-    return False
-
-
-def filter_non_beginner_books(
+def filter_books_for_search(
     books: List[BookResult],
     language: str = "ja",
-    max_count: int = 10
-) -> List[BookResult]:
-    """Filter out beginner books and return top N."""
-    filtered = []
+    max_count: int = 10,
+    verbose: bool = False
+) -> Tuple[List[BookResult], Dict[str, int]]:
+    """
+    Filter out beginner books AND irrelevant content, return top N.
+    Wrapper for filter_relevant_books from scripts.filters.
 
-    for book in books:
-        if not is_beginner_book(book.title, language):
-            filtered.append(book)
-            if len(filtered) >= max_count:
-                break
-
-    return filtered
+    Returns:
+        Tuple of (filtered_books, exclusion_stats)
+    """
+    if FILTER_AVAILABLE:
+        return filter_relevant_books(
+            books,
+            language=language,
+            max_count=max_count,
+            title_getter=lambda b: b.title,
+            verbose=verbose,
+            logger=logger
+        )
+    else:
+        # Fallback: no filtering if module not available
+        logger.warning("Filter module not available - returning all books")
+        return books[:max_count], {"beginner": 0, "irrelevant": 0, "accepted": len(books[:max_count])}
 
 
 def load_topics(path: Path) -> List[Dict[str, Any]]:
@@ -602,9 +688,13 @@ class DuplicateChecker:
 
         # Build BookIndex for fuzzy matching
         if MATCHER_AVAILABLE and master_records:
-            logger.info("Building book index for fuzzy matching...")
-            self.book_index = BookIndex(master_records)
-            logger.info(f"  Index stats: {self.book_index.stats()}")
+            try:
+                logger.info("Building book index for fuzzy matching...")
+                self.book_index = BookIndex(master_records)
+                logger.info(f"  Index stats: {self.book_index.stats()}")
+            except Exception as e:
+                logger.warning(f"  Failed to build book index: {e}")
+                self.book_index = None
 
     def is_duplicate(
         self,
@@ -739,6 +829,11 @@ def main():
         type=int,
         help='Maximum number of keywords to process'
     )
+    parser.add_argument(
+        '--fresh-session',
+        action='store_true',
+        help='Create a fresh session for each request (helps avoid blocking)'
+    )
 
     args = parser.parse_args()
 
@@ -752,12 +847,14 @@ def main():
     logger.info(f"  Loaded {len(topics)} topic records")
 
     # Load or reset state
+    # Auto-resume if state file exists (unless --reset is specified)
     if args.reset:
         state = SearchState(started_at=datetime.now().isoformat())
         logger.info("Reset progress - starting fresh")
-    elif args.resume:
+    elif STATE_FILE.exists():
+        # Auto-resume from existing state
         state = load_state(STATE_FILE)
-        logger.info(f"Resuming from saved state")
+        logger.info(f"Resuming from saved state (auto-detected)")
         logger.info(f"  Keywords processed: {len(state.keywords_processed)}")
         logger.info(f"  Books added so far: {state.total_books_added}")
     else:
@@ -773,8 +870,8 @@ def main():
     dup_checker = DuplicateChecker(master_records)
     logger.info(f"  Existing ASINs: {len(dup_checker.asins)}")
     logger.info(f"  Existing ISBNs: {len(dup_checker.isbns)}")
-    if not MATCHER_AVAILABLE:
-        logger.warning("  book_matcher not available - fuzzy matching disabled")
+    if not dup_checker.book_index:
+        logger.warning("  Fuzzy matching disabled (book_index not available)")
 
     # Build keyword list
     keywords_to_process = []
@@ -834,7 +931,9 @@ def main():
         return
 
     # Initialize searcher
-    searcher = AmazonSearcher(delay=args.delay)
+    searcher = AmazonSearcher(delay=args.delay, fresh_session=args.fresh_session)
+    if args.fresh_session:
+        logger.info("Fresh session mode enabled - creating new session for each request")
 
     # Statistics
     stats = {
@@ -870,24 +969,36 @@ def main():
                 logger.info(f"  Found: {len(results)} books")
                 stats['books_found'] += len(results)
 
-                # Filter out beginner books
-                filtered = filter_non_beginner_books(
+                # Filter out beginner books and irrelevant content
+                filtered, filter_stats = filter_books_for_search(
                     results,
                     language=language,
-                    max_count=args.max_per_keyword * 2  # Get extra for duplicates
+                    max_count=args.max_per_keyword * 2,  # Get extra for duplicates
+                    verbose=True
                 )
 
                 filtered_count = len(results) - len(filtered)
                 stats['books_filtered'] += filtered_count
-                logger.info(f"  After filtering: {len(filtered)} books (filtered {filtered_count} beginner books)")
+                # Track detailed filter stats
+                if 'filter_by_type' not in stats:
+                    stats['filter_by_type'] = {'beginner': 0, 'irrelevant': 0}
+                stats['filter_by_type']['beginner'] += filter_stats['beginner']
+                stats['filter_by_type']['irrelevant'] += filter_stats['irrelevant']
+                logger.info(
+                    f"  After filtering: {len(filtered)} books "
+                    f"(excluded {filter_stats['beginner']} beginner, "
+                    f"{filter_stats['irrelevant']} irrelevant)"
+                )
 
                 # Add to master (avoiding duplicates)
                 added_count = 0
+                dup_count_this_keyword = 0
                 for book in filtered:
                     # Check for duplicates using multi-tier strategy
                     is_dup, dup_reason, dup_score = dup_checker.is_duplicate(book)
                     if is_dup:
                         stats['books_duplicate'] += 1
+                        dup_count_this_keyword += 1
                         # Track duplicate type for detailed stats
                         if 'dup_by_type' not in stats:
                             stats['dup_by_type'] = {'asin': 0, 'isbn': 0, 'fuzzy': 0}
@@ -917,12 +1028,15 @@ def main():
                     added_count += 1
                     stats['books_added'] += 1
 
-                logger.info(f"  Added: {added_count} new books")
+                logger.info(f"  Added: {added_count} new books (duplicates skipped: {dup_count_this_keyword})")
 
                 # Update state
                 state.keywords_processed[keyword_id] = 'completed'
                 state.total_books_added += added_count
                 stats['keywords_processed'] += 1
+
+                # Reset error counter on success
+                searcher.consecutive_errors = 0
 
                 # Log search
                 if not args.dry_run:
@@ -936,10 +1050,20 @@ def main():
                         path=SEARCH_LOG_FILE
                     )
 
-            except Exception as e:
-                logger.error(f"  Error: {e}")
+            except AmazonSearchError as e:
+                logger.error(f"  Amazon search error: {e}")
                 state.keywords_processed[keyword_id] = 'failed'
                 stats['errors'] += 1
+                if e.is_retryable:
+                    logger.info(f"  (Marked as failed - will retry on next run)")
+                    searcher.consecutive_errors += 1
+                    searcher._backoff_wait()
+            except Exception as e:
+                logger.error(f"  Unexpected error: {e}")
+                state.keywords_processed[keyword_id] = 'failed'
+                stats['errors'] += 1
+                searcher.consecutive_errors += 1
+                searcher._backoff_wait()
 
             # Save state periodically
             if (i + 1) % 10 == 0 and not args.dry_run:
@@ -967,7 +1091,12 @@ def main():
     print(f"{'=' * 60}")
     print(f"  Keywords processed: {stats['keywords_processed']}")
     print(f"  Books found: {stats['books_found']}")
-    print(f"  Books filtered (beginner): {stats['books_filtered']}")
+    print(f"  Books filtered: {stats['books_filtered']}")
+    # Show filter breakdown if available
+    if 'filter_by_type' in stats:
+        filter_types = stats['filter_by_type']
+        print(f"    - Beginner/Intro books: {filter_types.get('beginner', 0)}")
+        print(f"    - Irrelevant content: {filter_types.get('irrelevant', 0)}")
     print(f"  Books duplicate: {stats['books_duplicate']}")
     # Show duplicate breakdown if available
     if 'dup_by_type' in stats:
@@ -985,10 +1114,13 @@ def main():
 
     # Show progress
     completed = len([k for k, v in state.keywords_processed.items() if v == 'completed'])
+    failed = len([k for k, v in state.keywords_processed.items() if v == 'failed'])
     total = state.total_keywords
     if total > 0:
         progress = completed / total * 100
         print(f"\n  Overall progress: {completed}/{total} ({progress:.1f}%)")
+        if failed > 0:
+            print(f"  Failed keywords (will retry): {failed}")
 
 
 if __name__ == '__main__':

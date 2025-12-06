@@ -1597,9 +1597,9 @@ async def enrich_records(
                     f"{record.get('title', '')[:40]}... ({', '.join(changes[:5])})"
                 )
             else:
-                logger.debug(
-                    f"No changes [{i+1}/{len(target_records)}]: "
-                    f"{record.get('title', '')[:40]}..."
+                logger.info(
+                    f"Skipped [{i+1}/{len(target_records)}]: "
+                    f"{record.get('title', '')[:40]}... (no changes)"
                 )
 
     finally:
@@ -1822,8 +1822,13 @@ def main():
         print(f"\n{'=' * 60}")
         print("Enrichment Summary")
         print(f"{'=' * 60}")
+        processed_count = len(args.work_ids) if args.work_ids else (args.max_records if args.max_records else len(records))
+        processed_count = min(processed_count, len(records))
+        skipped_count = processed_count - len(changes)
         print(f"  Total records: {len(records)}")
+        print(f"  Processed: {processed_count}")
         print(f"  Records enriched: {len(changes)}")
+        print(f"  Skipped (no changes): {skipped_count}")
 
         if changes:
             # Count by change type
